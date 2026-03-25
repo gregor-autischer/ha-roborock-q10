@@ -17,7 +17,6 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from roborock import B01_Q10_DP
 from roborock.data.b01_q10.b01_q10_code_mappings import YXDeviceState, YXFanLevel
 
-from .const import DOMAIN
 from .coordinator import RoborockQ10ConfigEntry, RoborockQ10Coordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -93,11 +92,13 @@ class RoborockQ10Vacuum(StateVacuumEntity):
 
     async def async_added_to_hass(self) -> None:
         """Register for state updates when added to hass."""
+        await super().async_added_to_hass()
         self._coordinator.register_update_callback(self._handle_update)
 
     async def async_will_remove_from_hass(self) -> None:
         """Unregister for state updates when removed."""
         self._coordinator.unregister_update_callback(self._handle_update)
+        await super().async_will_remove_from_hass()
 
     @callback
     def _handle_update(self) -> None:
@@ -174,12 +175,22 @@ class RoborockQ10Vacuum(StateVacuumEntity):
             await q10.vacuum.pause_clean()
 
     async def async_return_to_base(self, **kwargs: Any) -> None:
-        """Stop cleaning and return to dock."""
+        """Stop cleaning and return to dock.
+
+        The robot resumes cleaning if sent directly to dock without stopping
+        first, so we always attempt stop before dock.  The stop is wrapped in
+        a try/except because it can fail when the vacuum is already idle, and
+        we must still send the dock command regardless.
+        """
         q10 = self._coordinator.q10
-        if q10:
+        if not q10:
+            return
+        try:
             await q10.vacuum.stop_clean()
-            await asyncio.sleep(1)
-            await q10.vacuum.return_to_dock()
+        except Exception:
+            _LOGGER.debug("stop_clean() failed before return_to_base; proceeding to dock")
+        await asyncio.sleep(1)
+        await q10.vacuum.return_to_dock()
 
     async def async_set_fan_speed(self, fan_speed: str, **kwargs: Any) -> None:
         """Set the fan speed."""

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -14,14 +15,12 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from roborock import (
-    B01_Q10_DP,
     Q10Status,
     RRiot,
     Reference,
     UserData,
 )
 from roborock.data.b01_q10.b01_q10_code_mappings import (
-    YXCleanType,
     YXDeviceState,
     YXFanLevel,
     YXWaterLevel,
@@ -104,8 +103,9 @@ class RoborockQ10Coordinator:
         self._model: str = "roborock.vacuum.ss07"
         self._fw_version: str = ""
         self._state = DeviceState()
-        self._update_callbacks: list = []
-        self._status_listener_unsub: Any = None
+        self._update_callbacks: list[Callable[[], None]] = []
+        self._status_listener_unsub: Callable[[], None] | None = None
+        self._closed: bool = False
 
     @property
     def state(self) -> DeviceState:
@@ -133,11 +133,11 @@ class RoborockQ10Coordinator:
             sw_version=self._fw_version,
         )
 
-    def register_update_callback(self, callback) -> None:
+    def register_update_callback(self, callback: Callable[[], None]) -> None:
         """Register a callback for state updates."""
         self._update_callbacks.append(callback)
 
-    def unregister_update_callback(self, callback) -> None:
+    def unregister_update_callback(self, callback: Callable[[], None]) -> None:
         """Unregister a callback."""
         self._update_callbacks.remove(callback)
 
@@ -165,7 +165,9 @@ class RoborockQ10Coordinator:
                 raise ConfigEntryAuthFailed(str(err)) from err
             raise ConfigEntryNotReady(str(err)) from err
 
-        # Find Q10 device
+        # Find Q10 device.
+        # NOTE: _devices is a private attribute of DeviceManager. If python-roborock
+        # exposes a public device-enumeration API in a future release, prefer that.
         for duid, dev in self._manager._devices.items():
             q10 = dev.b01_q10_properties
             if q10 is not None:
@@ -199,11 +201,23 @@ class RoborockQ10Coordinator:
         raise ConfigEntryNotReady("No Q10 device found in account")
 
     def _on_status_update(self) -> None:
-        """Handle status update from the device."""
+        """Handle status update from the device.
+
+        python-roborock dispatches this callback on the asyncio event loop, so
+        calling _sync_status and _notify_update directly is safe.  We still use
+        call_soon_threadsafe as a defensive measure in case the callback ever
+        fires from a background thread, and to consolidate both the state-sync
+        and the HA entity notification into a single scheduled call so that
+        entities never see a partially-updated DeviceState.
+        """
         if self._q10:
-            self._sync_status(self._q10.status)
-            # Schedule callbacks on the HA event loop for thread safety
-            self.hass.loop.call_soon_threadsafe(self._notify_update)
+            status = self._q10.status
+            self.hass.loop.call_soon_threadsafe(self._apply_status_update, status)
+
+    def _apply_status_update(self, status: Q10Status) -> None:
+        """Sync state and notify entities — always runs on the HA event loop."""
+        self._sync_status(status)
+        self._notify_update()
 
     def _sync_status(self, status: Q10Status) -> None:
         """Sync Q10Status fields to our DeviceState."""
@@ -222,11 +236,23 @@ class RoborockQ10Coordinator:
         self._state.sensor_life = status.sensor_life
 
     async def async_close(self) -> None:
-        """Close the connection."""
-        if self._status_listener_unsub:
+        """Close the connection.
+
+        Idempotent — safe to call from both async_unload_entry and the
+        homeassistant_stop shutdown listener registered in __init__.py.
+        """
+        if self._closed:
+            return
+        self._closed = True
+
+        if self._status_listener_unsub is not None:
             self._status_listener_unsub()
-        if self._manager:
+            self._status_listener_unsub = None
+
+        if self._manager is not None:
+            manager = self._manager
+            self._manager = None
             try:
-                await asyncio.wait_for(self._manager.close(), timeout=5)
-            except (asyncio.TimeoutError, Exception):
-                _LOGGER.debug("Timeout closing device manager, forcing shutdown")
+                await asyncio.wait_for(manager.close(), timeout=5)
+            except Exception:
+                _LOGGER.debug("Timeout or error closing device manager, forcing shutdown")

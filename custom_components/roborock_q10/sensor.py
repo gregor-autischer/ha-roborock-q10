@@ -7,11 +7,10 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, UnitOfTime, UnitOfArea
+from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
 from .coordinator import RoborockQ10ConfigEntry, RoborockQ10Coordinator
 
 
@@ -42,11 +41,13 @@ class RoborockBaseSensor(SensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """Register for updates."""
+        await super().async_added_to_hass()
         self._coordinator.register_update_callback(self._handle_update)
 
     async def async_will_remove_from_hass(self) -> None:
         """Unregister for updates."""
         self._coordinator.unregister_update_callback(self._handle_update)
+        await super().async_will_remove_from_hass()
 
     @callback
     def _handle_update(self) -> None:
