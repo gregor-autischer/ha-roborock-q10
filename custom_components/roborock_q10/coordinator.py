@@ -14,12 +14,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.device_registry import DeviceInfo
 
-from roborock import (
-    Q10Status,
-    RRiot,
-    Reference,
-    UserData,
-)
+from roborock import RRiot, Reference, UserData
+from roborock.data.b01_q10.b01_q10_containers import Q10Status
 from roborock.data.b01_q10.b01_q10_code_mappings import (
     YXDeviceState,
     YXFanLevel,
