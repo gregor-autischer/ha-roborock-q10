@@ -31,7 +31,12 @@ from roborock.devices.device_manager import (
     create_device_manager,
 )
 from roborock.devices.traits.b01.q10 import Q10PropertiesApi
-from roborock.exceptions import RoborockException
+from roborock.exceptions import (
+    RoborockException,
+    RoborockInvalidCredentials,
+    RoborockInvalidUserAgreement,
+    RoborockNoUserAgreement,
+)
 
 from .const import CONF_USER_DATA, DOMAIN
 
@@ -160,9 +165,13 @@ class RoborockQ10Coordinator:
             )
         except asyncio.TimeoutError as err:
             raise ConfigEntryNotReady("Timeout connecting to Roborock cloud") from err
+        except (
+            RoborockInvalidCredentials,
+            RoborockInvalidUserAgreement,
+            RoborockNoUserAgreement,
+        ) as err:
+            raise ConfigEntryAuthFailed(str(err)) from err
         except RoborockException as err:
-            if "auth" in str(err).lower() or "credential" in str(err).lower():
-                raise ConfigEntryAuthFailed(str(err)) from err
             raise ConfigEntryNotReady(str(err)) from err
 
         # Find Q10 device.
