@@ -51,6 +51,7 @@ STATE_MAP: dict[YXDeviceState, VacuumActivity] = {
     YXDeviceState.UPDATING: VacuumActivity.IDLE,
     YXDeviceState.RELOCATING: VacuumActivity.IDLE,
     YXDeviceState.SAVING_MAP: VacuumActivity.IDLE,
+    YXDeviceState.REMOTE_CONTROL_ACTIVE: VacuumActivity.CLEANING,
     YXDeviceState.TRANSITIONING: VacuumActivity.CLEANING,
     YXDeviceState.WAITING_TO_CHARGE: VacuumActivity.DOCKED,
 }
@@ -148,12 +149,6 @@ class RoborockQ10Vacuum(StateVacuumEntity):
             attrs["clean_mode"] = state.clean_mode
         if state.fault is not None and state.fault != 0:
             attrs["fault"] = state.fault
-        if state.main_brush_life is not None:
-            attrs["main_brush_life"] = state.main_brush_life
-        if state.side_brush_life is not None:
-            attrs["side_brush_life"] = state.side_brush_life
-        if state.filter_life is not None:
-            attrs["filter_life"] = state.filter_life
         return attrs
 
     async def async_start(self) -> None:

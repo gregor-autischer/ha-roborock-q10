@@ -56,6 +56,9 @@
       },
       "filter_life": {
         "name": "Filter life"
+      },
+      "sensor_life": {
+        "name": "Sensor life"
       }
     }
   }

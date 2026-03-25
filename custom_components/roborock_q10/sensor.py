@@ -26,6 +26,7 @@ async def async_setup_entry(
         RoborockMainBrushSensor(coordinator),
         RoborockSideBrushSensor(coordinator),
         RoborockFilterSensor(coordinator),
+        RoborockSensorLifeSensor(coordinator),
     ])
 
 
@@ -129,3 +130,22 @@ class RoborockFilterSensor(RoborockBaseSensor):
     def native_value(self) -> int | None:
         """Return the filter life remaining."""
         return self._coordinator.state.filter_life
+
+
+class RoborockSensorLifeSensor(RoborockBaseSensor):
+    """Sensor (cliff/wall) life remaining sensor."""
+
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:signal-distance-variant"
+    _attr_translation_key = "sensor_life"
+
+    def __init__(self, coordinator: RoborockQ10Coordinator) -> None:
+        """Initialize."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.device_id}_sensor"
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the sensor life remaining."""
+        return self._coordinator.state.sensor_life
