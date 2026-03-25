@@ -1,0 +1,62 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Roborock",
+        "description": "Enter the email address associated with your Roborock account.",
+        "data": {
+          "email": "Email address"
+        },
+        "data_description": {
+          "email": "The email you use to log in to the Roborock app."
+        }
+      },
+      "code": {
+        "title": "Enter Verification Code",
+        "description": "A verification code has been sent to your email. Enter it below.",
+        "data": {
+          "code": "Verification code"
+        },
+        "data_description": {
+          "code": "The 6-digit code sent to your email."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate",
+        "description": "Your session has expired. Click submit to receive a new verification code."
+      }
+    },
+    "error": {
+      "invalid_email": "No Roborock account found for this email address.",
+      "invalid_code": "The verification code is incorrect. Please try again.",
+      "too_frequent_requests": "Too many code requests. Please wait a moment and try again.",
+      "cannot_connect": "Unable to connect to Roborock cloud.",
+      "unknown": "An unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This account is already configured.",
+      "reauth_successful": "Reauthentication successful."
+    }
+  },
+  "entity": {
+    "vacuum": {
+      "roborock_q10": {
+        "name": "Vacuum"
+      }
+    },
+    "sensor": {
+      "battery": {
+        "name": "Battery"
+      },
+      "main_brush_life": {
+        "name": "Main brush life"
+      },
+      "side_brush_life": {
+        "name": "Side brush life"
+      },
+      "filter_life": {
+        "name": "Filter life"
+      }
+    }
+  }
+}
