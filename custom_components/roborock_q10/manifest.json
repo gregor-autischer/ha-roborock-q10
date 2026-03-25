@@ -1,13 +1,13 @@
 {
   "domain": "roborock_q10",
   "name": "Roborock Q10",
-  "codeowners": ["@autischer"],
+  "codeowners": ["@gregor-autischer"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/autischer/ha-roborock-q10",
+  "documentation": "https://github.com/gregor-autischer/ha-roborock-q10",
   "integration_type": "hub",
   "iot_class": "cloud_push",
-  "issue_tracker": "https://github.com/autischer/ha-roborock-q10/issues",
+  "issue_tracker": "https://github.com/gregor-autischer/ha-roborock-q10/issues",
   "loggers": ["roborock"],
   "requirements": ["python-roborock==5.0.0"],
   "version": "1.0.0"

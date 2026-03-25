@@ -49,7 +49,7 @@ A custom Home Assistant integration for controlling **Roborock Q10 series** robo
 1. Open Home Assistant
 2. Go to **HACS** > **Integrations**
 3. Click the **three dots** menu (top right) > **Custom repositories**
-4. Add this repository URL: `https://github.com/autischer/ha-roborock-q10`
+4. Add this repository URL: `https://github.com/gregor-autischer/ha-roborock-q10`
 5. Category: **Integration**
 6. Click **Add**
 
