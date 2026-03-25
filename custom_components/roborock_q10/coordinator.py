@@ -6,7 +6,7 @@ import asyncio
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeAlias
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL
@@ -42,7 +42,7 @@ from .const import CONF_USER_DATA, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-type RoborockQ10ConfigEntry = ConfigEntry[RoborockQ10Coordinator]
+RoborockQ10ConfigEntry: TypeAlias = ConfigEntry
 
 
 @dataclass
